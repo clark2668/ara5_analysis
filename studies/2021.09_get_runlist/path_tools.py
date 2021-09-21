@@ -26,8 +26,8 @@ def get_top_dir(station, year, sample):
     if year > 2013:
 
         top_dir_list = {
-            'burn': '/data/wipac/ARA/2014/unblinded/L1',
-            'full': '/data/wipac/ARA/2014/blinded/L1/'
+            'burn': f'/data/wipac/ARA/{year}/unblinded/L1',
+            'full': f'/data/wipac/ARA/{year}/blinded/L1/'
         }
 
         top_dir = os.path.join(
@@ -48,23 +48,18 @@ def list_all_files(station, year, sample):
             full_name = os.path.join(root, name)
             if 'root' not in full_name: # only check root files
                 continue
-            if 'Hk' in full_name: # skip Hk files
-                continue
-            if 'old' in full_name:
-                continue
-            if 'start' in full_name: # skip runstart files
-                continue
-            if 'Start' in full_name: # skip runStart files
-                continue
-            if 'stop' in full_name: # skip runstop files
-                continue
-            if 'Stop' in full_name: # skip runStop files
-                continue
-            if 'config' in full_name: # skip configFile files
-                continue
-            if 'monitor' in full_name: # skip monitor files
-                continue
+
+            # files containing these words should be excluded
+            # e.g. "runStart", "configFiles" files
+            exclusions = ['Hk', 'old', 'start', 'Start', 'stop', 'Stop',
+                'config', 'monitor', 'ukey'
+            ]
+            include = True
+            for e in exclusions:
+                if e in full_name:
+                    include = False
         
-            full_file_list.append(full_name)
+            if include:
+                full_file_list.append(full_name)
 
     return sorted(full_file_list) # return sorted
