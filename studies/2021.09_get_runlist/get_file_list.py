@@ -4,6 +4,8 @@ import path_tools as pt
 
 years = [2013, 2014, 2015, 2016, 2017, 2018]
 stations = [1, 2, 3, 4, 5]
+# years = [2013]
+# stations = [2]
 sample = 'full'
 top_dir = '/data/user/brianclark/ARA/ara5_analysis/data/full'
 
@@ -26,7 +28,7 @@ if find_original_files:
             if len(file_list) < 1:
                 print("Skipping A{} {}".format(s, y))
                 continue
-            out_filename = f"filelist_a{s}_y{y}_{sample}.txt"
+            out_filename = f"orig_filelist_a{s}_y{y}_{sample}.txt"
 
             with open(out_filename, 'w') as f:
                 for file in file_list:
@@ -43,7 +45,7 @@ if make_output_directories:
             os.mkdir(year_dir, mode)
 
         for s in stations:
-            in_filename = f"./filelist_a{s}_y{y}_{sample}.txt"
+            in_filename = f"./orig_filelist_a{s}_y{y}_{sample}.txt"
             if os.path.isfile(in_filename):
                 station_dir = os.path.join(year_dir, f"A{s}")
                 os.mkdir(station_dir, mode)
@@ -53,7 +55,7 @@ if make_output_directories:
 '''
 Actually make symlinks
 '''
-make_symlinks = True
+make_symlinks = False
 if make_symlinks:
     for y in years:
         for s in stations:
@@ -82,4 +84,24 @@ if make_symlinks:
                         os.symlink(src_file, trg_file)
 
                 file.close()
+
+'''
+Harvest new file locations
+'''
+find_new_files = True
+if find_new_files:
+    for y in years:
+        for s in stations:
+            the_dir = os.path.join(top_dir, f"{y}", f"A{s}")
+
+            if os.path.isdir(the_dir):
+                file_list = sorted(os.listdir(the_dir))
+
+                out_filename = f"filelist_a{s}_y{y}_{sample}.txt"
+                
+                with open(out_filename, 'w') as f:
+                    for file in file_list:
+                        file_name = os.path.join(the_dir, file)
+                        f.write(f"{file_name}\n")
+
 
