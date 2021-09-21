@@ -6,8 +6,8 @@ request_cpus = 1
 request_memory = 4GB
 request_disk = 4GB
 Universe = vanilla
-should_transfer_files = FALSE
-#when_to_transfer_output = ON_EXIT
+should_transfer_files = TRUE
+when_to_transfer_output = ON_EXIT
 +AccountingGroup="quicktest.$ENV(USER)"
 
 executable = job.sh

@@ -19,3 +19,8 @@ echo "Tarring done, preparing to move..."
 cp $TMPDIR/${OUTFILE}.tar.gz $OUTDIR/.
 
 echo "File move complete"
+
+rm $TMPDIR/${OUTFILE}.tar.gz
+rm $TMPDIR/${OUTFILE}
+
+echo "Cleanup done"
