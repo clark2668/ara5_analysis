@@ -2,12 +2,16 @@ import argparse
 import os
 import path_tools as pt
 
-years = [2013, 2014, 2015, 2016, 2017, 2018]
-stations = [1, 2, 3, 4, 5]
-# years = [2013]
-# stations = [2]
+# years = [2013, 2014, 2015, 2016, 2017, 2018]
+# stations = [1, 2, 3, 4, 5]
+years = [2013]
+stations = [2]
 sample = 'full'
 top_dir = '/data/user/brianclark/ARA/ara5_analysis/data/full'
+ped_dir = '/data/user/brianclark/ARA/ara5_analysis/peds'
+
+# set top dir to ped dir to make directory structure for peds
+# top_dir = ped_dir
 
 mode = 0o744
 
@@ -28,7 +32,7 @@ if find_original_files:
             if len(file_list) < 1:
                 print("Skipping A{} {}".format(s, y))
                 continue
-            out_filename = f"orig_filelist_a{s}_y{y}_{sample}.txt"
+            out_filename = f"files/orig_filelist_a{s}_y{y}_{sample}.txt"
 
             with open(out_filename, 'w') as f:
                 for file in file_list:
@@ -45,7 +49,7 @@ if make_output_directories:
             os.mkdir(year_dir, mode)
 
         for s in stations:
-            in_filename = f"./orig_filelist_a{s}_y{y}_{sample}.txt"
+            in_filename = f"files/orig_filelist_a{s}_y{y}_{sample}.txt"
             if os.path.isfile(in_filename):
                 station_dir = os.path.join(year_dir, f"A{s}")
                 os.mkdir(station_dir, mode)
@@ -67,11 +71,9 @@ if make_symlinks:
                 file = open(in_filename, "r")
                 for line in file:
                     src_file = line.split()[0] # grab the zero entry
-                    
-                    basename = os.path.basename(src_file) # get the base name, e.g. "event2245.root"
-                    basename_noext = os.path.splitext(basename)[0] # this reduces to event2245
-                    run_num = int(basename_noext.split("event", 1)[1]) # this gets the run, e.g. 2245
 
+                    run_num = pt.harvest_run_num(src_file)
+                    
                     trg_dir = os.path.join( top_dir, f"{y}", f"A{s}")
                     if not os.path.isdir(trg_dir):
                         raise OSError(f"A target directory ({trg_dir}) is missing.")
@@ -88,7 +90,7 @@ if make_symlinks:
 '''
 Harvest new file locations
 '''
-find_new_files = True
+find_new_files = False
 if find_new_files:
     for y in years:
         for s in stations:
@@ -104,4 +106,44 @@ if find_new_files:
                         file_name = os.path.join(the_dir, file)
                         f.write(f"{file_name}\n")
 
+
+'''
+Make dag files for running repeder
+'''
+make_dag_files = True
+if make_dag_files:
+    for s in stations:
+        for y in years:
+            in_filename = f"files/filelist_a{s}_y{y}_{sample}.txt"
+            if os.path.isfile(in_filename):
+
+                out_dir = os.path.join(ped_dir, f"{y}", f"A{s}")
+                if not os.path.isdir(out_dir):
+                    print(f"Output directory ({out_dir}) is missing. Move on")
+
+                dag_filename = f"run_repeder/dag_repeder_a_{s}_y_{y}.dag"
+                instructions = ""
+                instructions += 'CONFIG config.dagman\n'
+                with open(dag_filename, "w") as f:
+                    f.write(instructions)
+
+                index = 0
+
+                file = open(in_filename, "r")
+                for line in file:
+                    src_file = line.split()[0] # grab the zero entry
+                    run_num = pt.harvest_run_num(src_file)
+                    out_file = f"reped_run_{run_num}.dat"
+
+                    instructions = ""
+                    instructions += f"JOB job_{index} job.sub\n"
+                    instructions += f'VARS job_{index} station="{s}" year="{y}" run="{run_num}" infile="{src_file}" outfile="{out_file}" outdir="{out_dir}"\n\n'
+                    with open(dag_filename, "a") as f:
+                        f.write(instructions)
+                    
+                    index+=1
+
+                file.close()
+
+                    
 

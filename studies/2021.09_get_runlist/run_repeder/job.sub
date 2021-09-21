@@ -1,0 +1,16 @@
+log =    /scratch/brianclark/ARA/reped.$(station).$(year).$(run).log
+output = /scratch/brianclark/ARA/reped.$(station).$(year).$(run).out
+error =  /scratch/brianclark/ARA/reped.$(station).$(year).$(run).err
+
+request_cpus = 1
+request_memory = 4GB
+request_disk = 4GB
+Universe = vanilla
+should_transfer_files = FALSE
+#when_to_transfer_output = ON_EXIT
++AccountingGroup="quicktest.$ENV(USER)"
+
+executable = job.sh
+arguments = $(infile) $(outfile) $(outdir)
+
+queue

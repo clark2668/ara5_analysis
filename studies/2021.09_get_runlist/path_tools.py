@@ -63,3 +63,14 @@ def list_all_files(station, year, sample):
                 full_file_list.append(full_name)
 
     return sorted(full_file_list) # return sorted
+
+def harvest_run_num(file):
+    basename = os.path.basename(file) # get the base name, e.g. "event2245.root"
+    basename_noext = os.path.splitext(basename)[0] # this reduces to event2245
+
+    if '_' in basename_noext:
+        run_num = int(basename_noext.split("_", 1)[1]) # files like event_XXXX.root
+    else:
+        run_num = int(basename_noext.split("event", 1)[1]) # files like eventXXXX.root
+    
+    return run_num
