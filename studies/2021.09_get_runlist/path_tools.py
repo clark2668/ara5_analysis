@@ -52,7 +52,7 @@ def list_all_files(station, year, sample):
             # files containing these words should be excluded
             # e.g. "runStart", "configFiles" files
             exclusions = ['Hk', 'old', 'start', 'Start', 'stop', 'Stop',
-                'config', 'monitor', 'ukey'
+                'config', 'monitor', 'ukey', 'TIN'
             ]
             include = True
             for e in exclusions:
