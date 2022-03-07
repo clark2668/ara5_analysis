@@ -7,19 +7,28 @@ OUTDIR=$3
 echo "Working on file "$INFILE
 echo "Output file name "$OUTFILE
 
-source /cvmfs/ara.opensciencegrid.org/trunk/centos7/setup.sh
-${ARA_UTIL_INSTALL_DIR}/bin/repeder $INFILE $OUTFILE -d -x hist_channel_mask=0x0f0f0f0f
+#source /cvmfs/ara.opensciencegrid.org/trunk/centos7/setup.sh
+#${ARA_UTIL_INSTALL_DIR}/bin/repeder $INFILE $OUTFILE -d -x hist_channel_mask=0x0f0f0f0f
 
-echo "Repder done, preparing to zip..."
+source /data/user/brianclark/ARA/ara5_analysis/software/setup.sh
+${ARA_UTIL_INSTALL_DIR}/bin/repeder -d -m 0 -M 4096 $INFILE $OUTFILE
 
-gzip $OUTFILE
+if test -f "$OUTFILE"; then
 
-echo "Zipping done, preparing to move..."
+    echo "Repder done, preparing to zip..."
+    gzip $OUTFILE
 
-cp ${OUTFILE}.gz $OUTDIR/.
+    echo "Zipping done, preparing to move..."
 
-echo "File move complete"
+    cp ${OUTFILE}.gz $OUTDIR/.
 
-rm ${OUTFILE}.gz
+    echo "File move complete"
 
-echo "Cleanup done"
+    rm ${OUTFILE}.gz
+
+    echo "Cleanup done"
+else
+    echo "$OUTFILE does NOT exist -- repeder failed. Fail!"
+    echo "Stats: $INFILE $OUTFILE $OUTDIR"
+    exit 1
+fi

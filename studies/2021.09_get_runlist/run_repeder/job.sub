@@ -8,7 +8,7 @@ request_disk = 4GB
 Universe = vanilla
 should_transfer_files = TRUE
 when_to_transfer_output = ON_EXIT
-+AccountingGroup="quicktest.$ENV(USER)"
+#+AccountingGroup="quicktest.$ENV(USER)"
 
 executable = job.sh
 arguments = $(infile) $(outfile) $(outdir)

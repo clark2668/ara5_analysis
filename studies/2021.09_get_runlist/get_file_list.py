@@ -3,9 +3,8 @@ import os
 import path_tools as pt
 
 # years = [2013, 2014, 2015, 2016, 2017, 2018]
-# stations = [1, 2, 3, 4, 5]
+stations = [1, 2, 3, 4, 5]
 years = [2013]
-stations = [2]
 sample = 'full'
 top_dir = '/data/user/brianclark/ARA/ara5_analysis/data/full'
 ped_dir = '/data/user/brianclark/ARA/ara5_analysis/peds'
@@ -15,10 +14,11 @@ ped_dir = '/data/user/brianclark/ARA/ara5_analysis/peds'
 
 mode = 0o744
 
+
 '''
 Locate the original files on disk, and write them to a file
 '''
-find_original_files = False
+find_original_files = True
 if find_original_files:
     for y in years:
         for s in stations:
@@ -52,20 +52,21 @@ if make_output_directories:
             in_filename = f"files/orig_filelist_a{s}_y{y}_{sample}.txt"
             if os.path.isfile(in_filename):
                 station_dir = os.path.join(year_dir, f"A{s}")
-                os.mkdir(station_dir, mode)
+                if not os.path.isdir(station_dir):
+                    os.mkdir(station_dir, mode)
             else:
                 print(f"File list ({in_filename}) doesn't exist")
 
 '''
 Actually make symlinks
 '''
-make_symlinks = False
+make_symlinks = True
 if make_symlinks:
     for y in years:
         for s in stations:
 
             print("Working on symlinks for Y {}, Station {}".format(y, s))
-            in_filename = f"./filelist_a{s}_y{y}_{sample}.txt"
+            in_filename = f"./files/orig_filelist_a{s}_y{y}_{sample}.txt"
             
             if os.path.isfile(in_filename):
                 file = open(in_filename, "r")
@@ -79,7 +80,7 @@ if make_symlinks:
                         raise OSError(f"A target directory ({trg_dir}) is missing.")
 
                     run_num = str(run_num)
-                    # run_num = run_num.zfill(6) # make it six characters long
+                    run_num = run_num.zfill(6) # make it six characters long
                     
                     trg_file = os.path.join(trg_dir, f"event_{run_num}.root")
                     if not os.path.isfile(trg_file):
@@ -90,7 +91,7 @@ if make_symlinks:
 '''
 Harvest new file locations
 '''
-find_new_files = False
+find_new_files = True
 if find_new_files:
     for y in years:
         for s in stations:
@@ -99,7 +100,7 @@ if find_new_files:
             if os.path.isdir(the_dir):
                 file_list = sorted(os.listdir(the_dir))
 
-                out_filename = f"filelist_a{s}_y{y}_{sample}.txt"
+                out_filename = f"./files/filelist_a{s}_y{y}_{sample}.txt"
                 
                 with open(out_filename, 'w') as f:
                     for file in file_list:
@@ -132,7 +133,9 @@ if make_dag_files:
                 file = open(in_filename, "r")
                 for line in file:
                     src_file = line.split()[0] # grab the zero entry
-                    run_num = pt.harvest_run_num(src_file)
+                    run_num = str(pt.harvest_run_num(src_file))
+                    run_num = run_num.zfill(6) # make it six characters long
+                    # out_file = f"reped_a_{s}_run_{run_num}.dat"
                     out_file = f"reped_run_{run_num}.dat"
 
                     instructions = ""
