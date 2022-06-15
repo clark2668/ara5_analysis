@@ -4,7 +4,7 @@ import path_tools as pt
 
 # years = [2013, 2014, 2015, 2016, 2017, 2018]
 stations = [1, 2, 3, 4, 5]
-years = [2013]
+years = [2018]
 sample = 'full'
 top_dir = '/data/user/brianclark/ARA/ara5_analysis/data/full'
 ped_dir = '/data/user/brianclark/ARA/ara5_analysis/peds'
@@ -41,7 +41,7 @@ if find_original_files:
 '''
 Make the output directories for the file symlinks
 '''
-make_output_directories = False
+make_output_directories = True
 if make_output_directories:
     for y in years:
         year_dir = os.path.join(top_dir, f"{y}")
