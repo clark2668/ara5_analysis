@@ -1,0 +1,18 @@
+log    = /scratch/brianclark/ARA/fitty_$(channel)_$(freqbin).log
+output = /scratch/brianclark/ARA/fitty_$(channel)_$(freqbin).out
+error  = /scratch/brianclark/ARA/fitty_$(channel)_$(freqbin).err
+
+request_cpus = 1
+request_memory = 1GB
+request_disk = 1GB
+Universe = vanilla
++AccountingGroup="quicktest.$ENV(USER)"
+#+FileSystemDomain=<notarealdomain>
++TransferOutput = ""
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+
+executable = fit_rayleigh.sh
+arguments = $(file) $(channel) $(freqbin)
+
+queue

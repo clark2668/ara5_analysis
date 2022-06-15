@@ -1,0 +1,17 @@
+log    = /scratch/brianclark/ARA/simmy_$(runnumber).log
+output = /scratch/brianclark/ARA/simmy_$(runnumber).out
+error  = /scratch/brianclark/ARA/simmy_$(runnumber).err
+
+request_cpus = 1
+request_memory = 2GB
+request_disk = 2GB
+Universe = vanilla
+#+AccountingGroup="quicktest.$ENV(USER)"
++TransferOutput = ""
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
+
+executable = run_sim.sh
+arguments = $(setupfile) $(outputdir) $(runnumber)
+
+queue
