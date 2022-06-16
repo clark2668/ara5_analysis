@@ -1,5 +1,4 @@
-infile="/home/brianclark/ARA/DevAraRoot/rayleigh/fft_run3315.root"
-channel = 0
+infile="/home/brianclark/ARA/ara5_analysis/ara5_analysis/studies/2022.06_rayleigh_noise_update/fft_run3315.root"
 
 dag_file_name = 'dag_fit.dag'
 instructions = ""
@@ -10,10 +9,10 @@ with open(dag_file_name, 'w') as f:
 
 
 master_index = 0
-for freq_bin in range(12):
+for channel in range(16):
     instructions = ""
     instructions += f"JOB job_{master_index} fit_rayleigh.htc \n"
-    instructions += f'VARS job_{master_index} channel="{channel}" freqbin="{freq_bin}" \n\n'
+    instructions += f'VARS job_{master_index} channel="{channel}" \n\n'
     
     with open(dag_file_name, 'a') as f:
         f.write(instructions)
