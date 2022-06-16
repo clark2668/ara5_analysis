@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 	inTree->SetBranchAddress("chan_spec", &chan_spec);
 	inTree->SetBranchAddress("freqs", &freqs);
 
-	TH1D *h = new TH1D("","",300,0.,6.);
+	TH1D *h = new TH1D("","",200,0.,2.);
 
 	double numEntries = inTree -> GetEntries(); //get the number of entries in this file
 	for(int event=0; event<numEntries; event++){ //loop over those entries

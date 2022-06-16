@@ -2,9 +2,12 @@
 
 infile=$1
 channel=$2
-frequency=$3
 
 source /home/brianclark/ARA/DevAraRoot/setup.sh
 
-cd /home/brianclark/ARA/DevAraRoot/rayleigh/fit_rayleighs
-./fit_rayleigh ${infile} ${channel} ${frequency}
+# loop over frequency bins
+cd /home/brianclark/ARA/ara5_analysis/ara5_analysis/studies/2022.06_rayleigh_noise_update/fit_rayleighs
+for bin in {0..512}
+do
+    ./fit_rayleigh ${infile} ${channel} ${bin}
+done
