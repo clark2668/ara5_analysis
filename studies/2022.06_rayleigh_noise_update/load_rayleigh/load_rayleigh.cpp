@@ -15,6 +15,7 @@
 #include "TFile.h"
 #include "TGraph.h"
 #include "TCanvas.h"
+#include "TAxis.h"
 
 #include "Tools.h"
 
@@ -22,8 +23,9 @@ using namespace std;
 
 void loadFile(string filename){
 
-    int DATA_BIN_SIZE =16384; //FIXME: this needs to change back to the settings1 value
+    int DATA_BIN_SIZE = 16384; //FIXME: this needs to change back to the settings1 value
     double TIMESTEP = 3.125e-10; //FIXME: this needs to change back to the settings1 value
+    int numChans = 16; // FIXME: don't assume the number of channels
 
     // first, check if the file exists
     char errorMessage[400];
@@ -35,10 +37,7 @@ void loadFile(string filename){
         throw std::runtime_error(errorMessage);
     }
 
-    ifstream rayleighFile(filename.c_str());
-
-    int numChans = 16; // FIXME: don't assume the number of channels 
-
+    ifstream rayleighFile(filename.c_str()); // open the file
     string line; // a dummy variable we can stream over
 
     // first, make sure our user has formatted the file correctly
@@ -84,14 +83,15 @@ void loadFile(string filename){
     rayleighFile.seekg(0, ios::beg);
     int numFreqBins = lineCount - 1; // one row is dedicated to headers; number of freq bins is therefore # rows - 1
 
+    // Set up containers to stream the csv file into.
     // vector of the frequencies
     std::vector<double> frequencies;
     frequencies.resize(numFreqBins); // resize to account for the number of frequency bins
     
     /*
-    vector of vectors to hold the fit values
-    the first dimension is for the number of channels (so this is "number of channels" long)
-    the second dimension is for the number of frequency bins (so this is "number of frequency bins" long)
+    Then a vector of vectors to hold the fit values.
+    The first dimension is for the number of channels (so this is "number of channels" long).
+    The second dimension is for the number of frequency bins (so this is "number of frequency bins" long).
     (which goes first and which goes second is arbitrary; 
     the TestBed version does it in this order, so replicate here)
     */
@@ -109,16 +109,16 @@ void loadFile(string filename){
         while(rayleighFile.good()){
 
             if(theLineNo == 0 ){
-                // skip the first line
+                // skip the first line (the header file)
                 getline (rayleighFile, line);
                 theLineNo++;
             }
             else{
                 /*
-                from the second line forward, read!
+                from the second line forward, read in the values
                 the first column is the frequency
                 the second, third, etc. column should be the fit values for all channels.
-                so we need to loop
+                so we need to loop over all the comma separated entries in the single line
                 */
 
                 // first, peel off the frequency
@@ -135,11 +135,11 @@ void loadFile(string filename){
                 frequencies[theFreqBin] = temp_freq_val;
 
                 /*
-                then loop over the channels
-                because the "separating" character for the very last channel is a newline (\n)
-                we have to loop over n_channels - 1 here
-                and then change the newline characeter for the final channel to \n
-                (see below)
+                then loop over the channels, splitting most on the comma ","
+                Because the "separating" character for the very last channel is a newline (\n),
+                we have to loop over n_channels - 1 here,
+                and then change to the newline characeter for the final channel
+                (see below).
                 */
                 int numCols = 0;
                 while(numCols < numChans-1){
@@ -158,6 +158,7 @@ void loadFile(string filename){
 
                 // once more to get the final channel, this time we need to detect the newline character
                 // NB: at this point, numCols == final channel number, so we can just use it
+                // (no need to incremete numCols again)
                 getline(rayleighFile, line, '\n');
                 double temp_fit_val = atof(line.c_str());
                 // printf("  The Fit Val for Freq Bin %d, Col %d, is %.4f \n", theFreqBin, numCols, temp_fit_val);
@@ -169,7 +170,8 @@ void loadFile(string filename){
             }
         }
     }
-
+    rayleighFile.close(); 
+    
     // can be useful for debugging (leave commented out for now)
     // for(int iCh=0; iCh<fits.size(); iCh++){
     //     printf("Channel %d \n", iCh);
@@ -221,15 +223,16 @@ void loadFile(string filename){
     }
 
     // and now we're good and truly done
-    // let's see our handy work...
-
-    // TCanvas *c = new TCanvas("","", 1100, 850);
-    // TGraph *grOld = new TGraph(frequencies.size(), &frequencies[0], &fits[0][0]);
-    // TGraph *grNew = new TGraph(DATA_BIN_SIZE/2, interp_frequencies_databin, &fits_databin_ch[0][0]);
-    // grOld->Draw("ALP");
-    // grNew->Draw("LPsame");
-    // grNew->SetLineColor(kRed);
-    // c->SaveAs("interp_test.png");
+    
+    // let's see our handy work by making a simple plot
+    TCanvas *c = new TCanvas("","", 1100, 850);
+    TGraph *grOld = new TGraph(frequencies.size(), &frequencies[0], &fits[3][0]);
+    TGraph *grNew = new TGraph(DATA_BIN_SIZE/2, interp_frequencies_databin, &fits_databin_ch[3][0]);
+    grNew->Draw("ALP");
+    grOld->Draw("LPsame");
+    // grOld->GetXaxis()->SetRangeUser(0., 2000.);
+    grNew->SetLineColor(kRed);
+    c->SaveAs("interp_test.png");
 
 }
 
