@@ -133,15 +133,24 @@ int main(int argc, char **argv)
 
 
             if(theQual){
+
+                std::vector<TGraph*> waveforms;
+                std::vector<TGraph*> spectra;
+
                 for(int chan=0; chan<16; chan++){
                     TGraph *grRaw = realAtriEvPtr->getGraphFromRFChan(chan);
+                    std::cout<<"Time Spacing is "<<grRaw->GetX()[1] - grRaw->GetX()[0]<<std::endl;
                     TGraph *grInt = FFTtools::getInterpolatedGraph(grRaw, 0.5);
+                    std::cout<<"grInt is "<<grInt->GetN()<<std::endl;
                     TGraph *grPad = FFTtools::padWaveToLength(grInt,1024);
                     TGraph *spec = makeFreqV_MilliVoltsNanoSeconds(grPad);
                     for(int samp=0; samp<512; samp++){
                         chan_spec[chan][samp]=spec->GetY()[samp];
                         freqs[chan][samp]=spec->GetX()[samp];
                     }
+                    waveforms.push_back((TGraph*) grInt->Clone());
+                    spectra.push_back((TGraph*) spec->Clone());
+
                     delete spec;
                     delete grPad;
                     delete grInt;
@@ -149,6 +158,33 @@ int main(int argc, char **argv)
                 }
                 outTree->Fill();
                 num_found++;
+
+                TCanvas *cTime = new TCanvas("","",1100,850);
+                cTime->Divide(4,4);
+                for(int i=0; i<16; i++){
+                    cTime->cd(i+1);
+                    waveforms[i]->Draw("ALP");
+                    waveforms[i]->GetYaxis()->SetRangeUser(-50, 50);
+                }
+                char savetitle[500];
+                sprintf(savetitle, "./plots/run%d_ev%d_sim%d_waveforms.png", runNumber, event, isSimulation);
+                cTime->SaveAs(savetitle);
+                
+                TCanvas *cFreq = new TCanvas("","",1100,850);
+                cFreq->Divide(4,4);
+                for(int i=0; i<16; i++){
+                    cFreq->cd(i+1);
+                    spectra[i]->Draw("ALP");
+                    spectra[i]->GetYaxis()->SetRangeUser(1E-3, 2);
+                    gPad->SetLogy();
+                }
+                sprintf(savetitle, "./plots/run%d_ev%d_sim%d_spectra.png", runNumber, event, isSimulation);
+                cFreq->SaveAs(savetitle);
+
+
+
+
+
             }
             
             if(!isSimulation){
