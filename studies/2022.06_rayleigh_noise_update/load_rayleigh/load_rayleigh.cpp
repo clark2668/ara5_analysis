@@ -34,7 +34,7 @@ void loadFile(string filename){
     bool rayleighFileExists = (stat(filename.c_str(), &buffer)==0);
     if (!rayleighFileExists){
         sprintf(errorMessage, "Rayleigh noise fits file is not found (rayleigh file exists %d) ", rayleighFileExists);
-        throw std::runtime_error(errorMessage);
+        throw std::runtime_error(errorMessage); 
     }
 
     ifstream rayleighFile(filename.c_str()); // open the file
