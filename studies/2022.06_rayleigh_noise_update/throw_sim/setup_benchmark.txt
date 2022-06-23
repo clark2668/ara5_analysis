@@ -4,7 +4,7 @@ DETECTOR=4                           //actual deployed station
 DETECTOR_STATION=2                   //ARA02
 DETECTOR_STATION_LIVETIME_CONFIG=1   //emulate config 1
 number_of_stations=1
-TIMESTEP=5E-10
+TIMESTEP=3.125E-10
 #TIMESTEP=5.5E-10
 NFOUR=1024
 core_x=10000
@@ -17,7 +17,7 @@ ALL_ANT_V_ON=0              //apply Hpol and Vpol gains respectively
 
 //---PRIMARY AND SHOWER---
 EXPONENT=600                            //600
-NNU=25                   //number of neutrino events
+NNU=100                   //number of neutrino events
 ONLY_PASSED_EVENTS=0        //0 (default): AraSim throws NNU events whether or not they pass; 1: AraSim throws events until the number of events that pass the trigger is equal to NNU_PASSED
 //NNU_PASSED = 1
 NU_NUBAR_SELECT_MODE=3      //random
@@ -44,21 +44,21 @@ USE_ARA_ICEATTENU=2                             //use ARA-measured attenuation d
 //---NOISE---
 NOISE_WAVEFORM_GENERATE_MODE=0  //generate new noise waveforms for each event
 NOISE_EVENTS=1                  //number of pure noise waveforms
-NOISE=1                         //flat thermal noise
+NOISE=0                         //flat thermal noise
 NOISE_CHANNEL_MODE=1            //using different noise temperature for each channel
 APPLY_NOISE_FIGURE=1            //apply TM signal chain calibrated results
 TRIG_ANALYSIS_MODE=2            //0 = signal + noise, 1 = signal only, 2 = noise only
 
 //---TRIGGER---
 TRIG_WINDOW=1.1E-7                   //110ns
-POWERTHRESHOLD=-1                 //5Hz RF trigger rate with 110ns trigger window 3/8 Hpol/Vpol trigger
+POWERTHRESHOLD=-6.22                 //5Hz RF trigger rate with 110ns trigger window 3/8 Hpol/Vpol trigger
 TRIG_MODE=1              //use vpol, hpol separated trigger mode
 N_TRIG_V=3
 N_TRIG_H=3
 
 //---READOUT---
 V_SATURATION=5.5        //readout voltage saturation 1.5V
-WAVEFORM_LENGTH=550    //number of samples in final waveform (normally ~1280)
+WAVEFORM_LENGTH=1280    //number of samples in final waveform (normally ~1280)
 V_MIMIC_MODE=0          //0 : global trig is located center of readout windows
 DATA_SAVE_MODE=0        //save final waveforms + physics data
 DATA_LIKE_OUTPUT=1      //do data like output for all events (even untriggered)
