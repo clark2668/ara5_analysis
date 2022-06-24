@@ -30,7 +30,7 @@ for event in range(num_events):
         grInt = ROOT.FFTtools.getInterpolatedGraph(grRaw, 0.5)
         grPad = ROOT.FFTtools.padWaveToLength(grInt, 1024)
         
-        helper.do_with_python(grPad)
+        helper.do_fft_with_python(grPad)
 
 
         del grPad, grInt, grRaw, usefulEvent
