@@ -21,10 +21,14 @@ gSystem.Load('libAra.so')
 file1 = '/home/brian/ARA/ara5_analysis/tools/AraSim/AraOut.noise_setup_2048.txt.run30000.root'
 file2 = '/home/brian/ARA/ara5_analysis/tools/AraSim/AraOut.noise_setup_1024.txt.run20000.root'
 
-the_norm = 'dTdF'
+
+the_norm = 'standard'
+# the_norm = 'dT'
+# the_norm = 'dTdF'
+
 print("The Norm is {} ".format(the_norm))
 the_pad = None
-gr1 = helper.get_single_event_AraSim(file1, 0, 0, pad=the_pad)
+gr1 = helper.get_single_event_AraSim(file1, 0, 0)
 t1, v1 = helper.get_t_v_arrays(gr1)
 freqs1, fft1 = helper.do_fft_with_python(gr1, norm=the_norm)
 
@@ -40,10 +44,10 @@ fft1_ave = copy.deepcopy(fft1)
 fft2_ave = copy.deepcopy(fft2)
 
 # accumulate
-numInSum = 1
+numInSum = 200
 for i in range (1, numInSum):
     print("Adding {} ...".format(i))
-    temp_gr1 = helper.get_single_event_AraSim(file1, i, 0, pad=the_pad)
+    temp_gr1 = helper.get_single_event_AraSim(file1, i, 0)
     temp_t1, temp_v1 = helper.get_t_v_arrays(gr1)
     temp_gr2 = helper.get_single_event_AraSim(file2, i, 0)
     t2, v2 = helper.get_t_v_arrays(gr2)
@@ -69,8 +73,8 @@ axs[0].plot(t1, v1, label='{} samples'.format(len(v1)))
 axs[0].plot(t2, v2, ls='--', label='{} samples'.format(len(v2)))
 axs[0].set_xlabel('Time [s]')
 axs[0].set_ylabel('Voltage [V]')
-axs[0].legend()
-axs[0].set_title('Time Domain')
+axs[0].legend(loc='upper right')
+# axs[0].set_title('Time Domain')
 
 # # histogram of samples (to check rms)
 # bins = np.linspace(-150E-3, 150E-3, 50)
@@ -89,16 +93,19 @@ if the_norm == 'standard':
     time_norm_2 = 1.
     freq_norm_1 = 1.
     freq_norm_2 = 1.
+    the_freq_ylabel = 'Spectrum [V]'
 if the_norm == 'dT':
     time_norm_1 = dT1
     time_norm_2 = dT2
     freq_norm_1 = 1.
     freq_norm_2 = 1.
+    the_freq_ylabel = r'Spectrum [V / $\sqrt{Hz}$]'
 elif the_norm == 'dTdF':
     time_norm_1 = dT1
     time_norm_2 = dT2
     freq_norm_1 = dF1
     freq_norm_2 = dF2
+    the_freq_ylabel = r'Spectrum [V $\cdot$ s]'
 
 
 # double check parseval's theorem ("time-integral squared amplitude version")
@@ -125,12 +132,12 @@ print("Power Freq Spec 2 {:.3e}".format(power_fft2))
 # spectra
 
 axs[1].plot(freqs1, fft1_ave**2)
-axs[1].plot(freqs2, 2*fft2_ave**2, ls='--')
+axs[1].plot(freqs2, fft2_ave**2, ls='--')
 
 axs[1].set_xlabel('Frequency [Hz]')
-axs[1].set_ylabel('Spectrum [V/Hz]')
+axs[1].set_ylabel(the_freq_ylabel)
 # axs[1].set_ylim([0,5E-18])
-axs[1].set_title("Freq Domain: Norm {}")
+axs[1].set_title("'{}' normalization".format(the_norm))
 
 plt.tight_layout(pad=5.)
-fig.savefig('traces_{}.png'.format(the_pad), bbox_inches='tight')
+fig.savefig('traces_norm_{}.pdf'.format(the_norm), bbox_inches='tight')
