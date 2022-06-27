@@ -13,6 +13,8 @@
 #include "TGraph.h"
 #include "TCanvas.h"
 
+#include "FFTtools.h"
+
 //AraSim Includes
 #include "Tools.h"
 
@@ -31,9 +33,14 @@ int main(int argc, char **argv)
     double dF = 1./(double(length) * dT); // Hz
     double times[length];
     double volts[length];
+    int newLength = (length/2)+1;
 
-    double times_forFFT[length];
-    double volts_forFFT[length];
+    double times_forrealft[length];
+    double volts_forrealft[length];
+    double spectrum_realft[length];
+
+    double *volts_doFFT = new double [length];
+    double *spectrum_doFFT = new double [newLength];
 
     // fill the time domain traces
     for(int i=0; i<length; i++){
@@ -44,42 +51,72 @@ int main(int argc, char **argv)
         times[i] = t;
         volts[i] = v;
 
-        times_forFFT[i] = t;
-        volts_forFFT[i] = v;
+        times_forrealft[i] = t;
+        volts_forrealft[i] = v;
+
+        volts_doFFT[i] = v;
     }
 
-    TGraph *grOrg = new TGraph(length, times, volts);
+    bool compare_doFFT_to_AraSim = true;
+    if(compare_doFFT_to_AraSim){
 
-    Tools::realft(volts_forFFT, 1, length); // forward transform
-    Tools::realft(volts_forFFT, -1, length); // reverse transform
+        FFTWComplex *theFFT = FFTtools::doFFT(length, volts);
+        for(int i=0; i<newLength; i++){
+            spectrum_doFFT[i] = FFTtools::getAbs(theFFT[i]);
+        }
 
-    TGraph *grNew = new TGraph(length, times_forFFT, volts_forFFT);
+        Tools::realft(volts_forrealft, 1, length); // forward transform
+        for(int i=0; i<newLength; i++){
+            spectrum_realft[i] = 
+                sqrt(
+                    pow(volts_forrealft[2*i], 2.)
+                    +
+                    pow(volts_forrealft[2*i+1], 2.)
+                );
+            
+        }
+        
+        for(int i=0; i<newLength; i++){
+            printf("Sample %d, Org %.2e, New %.2e, Ratio %.2e \n",
+                i, spectrum_doFFT[i], spectrum_realft[i],
+                spectrum_doFFT[i]/spectrum_realft[i]
+            );
+        }
 
-    for(int i=0; i<length; i++){
-        printf("Samp %d, Org %.2e, New %.2e, Ratio New/Org %.2e \n",
-            i, grOrg->GetY()[i], grNew->GetY()[i],
-            grNew->GetY()[i]/grOrg->GetY()[i]
-        );
+
     }
 
-    // so, AraSim requires a normalizing factor of 2/N (on the voltage!!)
-    // to get "round trip" behavior...
-    
-    // // get the FFT
-    // int newLength = length/2 + 1;
-    // double freqs[newLength];
-    // double spectra[newLength];
+    bool findNormalization = false;
+    if(findNormalization){
+        TGraph *grOrg = new TGraph(length, times, volts);
 
-    TCanvas *c = new TCanvas("", "", 1100, 850);
-    c->Divide(1, 2);
-    c->cd(1);
-    grOrg->Draw("ALP");
-    grOrg->SetTitle("Original");
-    c->cd(2);
-    grNew->Draw("ALP");
-    grNew->SetLineColor(kRed);
-    grNew->SetTitle("After rount trip FFT");
-    c->SaveAs("hi.png");
+        Tools::realft(volts_forrealft, 1, length); // forward transform
+        Tools::realft(volts_forrealft, -1, length); // reverse transform
+
+        TGraph *grNew = new TGraph(length, times_forrealft, volts_forrealft);
+
+        for(int i=0; i<length; i++){
+            printf("Samp %d, Org %.2e, New %.2e, Ratio New/Org %.2e \n",
+                i, grOrg->GetY()[i], grNew->GetY()[i],
+                grNew->GetY()[i]/grOrg->GetY()[i]
+            );
+        }
+
+        // so, AraSim requires a normalizing factor of 2/N (on the voltage!!)
+        // to get "round trip" behavior...
+        
+        TCanvas *c = new TCanvas("", "", 1100, 850);
+        c->Divide(1, 2);
+        c->cd(1);
+        grOrg->Draw("ALP");
+        grOrg->SetTitle("Original");
+        c->cd(2);
+        grNew->Draw("ALP");
+        grNew->SetLineColor(kRed);
+        grNew->SetTitle("After rount trip FFT");
+        c->SaveAs("hi.png");
+    }
+
 
 
 
