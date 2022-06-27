@@ -1,6 +1,11 @@
-log    = /scratch/brianclark/ARA/fitty_$(channel).log
-output = /scratch/brianclark/ARA/fitty_$(channel).out
-error  = /scratch/brianclark/ARA/fitty_$(channel).err
+#log    = /scratch/brianclark/ARA/fitty_$(channel).log
+#output = /scratch/brianclark/ARA/fitty_$(channel).out
+#error  = /scratch/brianclark/ARA/fitty_$(channel).err
+
+log    = /scratch/brian/ARA/fitty_$(channel).log
+output = /scratch/brian/ARA/fitty_$(channel).out
+error  = /scratch/brian/ARA/fitty_$(channel).err
+
 
 request_cpus = 1
 request_memory = 1GB

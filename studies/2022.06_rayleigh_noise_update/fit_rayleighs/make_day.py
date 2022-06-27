@@ -1,4 +1,5 @@
-infile="/home/brianclark/ARA/ara5_analysis/ara5_analysis/studies/2022.06_rayleigh_noise_update/fft_run3315.root"
+# infile="/home/brianclark/ARA/ara5_analysis/ara5_analysis/studies/2022.06_rayleigh_noise_update/fft_run3315.root"
+infile="/home/brian/ARA/ara5_analysis/ara5_analysis/studies/2022.06_rayleigh_noise_update/save_ffts/fft_run3315.root"
 
 dag_file_name = 'dag_fit.dag'
 instructions = ""

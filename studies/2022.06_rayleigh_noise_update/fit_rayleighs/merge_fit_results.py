@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 def remove_outliers(the_dataframe):
-    the_dataframe.loc[the_dataframe.Fit > 2, 'Fit'] = np.nan
+    the_dataframe.loc[the_dataframe.Fit > 50, 'Fit'] = np.nan
     the_dataframe.loc[the_dataframe.Fit < 0, 'Fit'] = np.nan
     mask = np.isnan(the_dataframe.Fit)
     the_dataframe.Fit[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), the_dataframe.Fit[~mask])
