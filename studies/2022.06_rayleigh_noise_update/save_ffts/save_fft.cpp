@@ -34,7 +34,6 @@ UsefulAtriStationEvent *realAtriEvPtr;
 
 using namespace std;
 
-TGraph *makeFFTPlot(TGraph *grWave);
 TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave );
 
 int main(int argc, char **argv)
@@ -78,7 +77,7 @@ int main(int argc, char **argv)
 
         printf("Filter Run Number %d \n", runNum);
         char ped_file_name[400];
-        sprintf(ped_file_name, "/data/user/brianclark/ARA/ara5_analysis/peds/%d/A%d/reped_run_%06d.dat.gz", year, station, runNum);
+        sprintf(ped_file_name, "/disk20/users/brian/ARA/peds/%d/A%d/reped_run_%06d.dat.gz", year, station, runNum);
         printf("The Pedestal filename is %s\n", ped_file_name);
 
         AraEventCalibrator *calibrator = AraEventCalibrator::Instance();
@@ -102,6 +101,7 @@ int main(int argc, char **argv)
     AraQualCuts *qual = AraQualCuts::Instance();
     int num_found=0;
     std::cout<<"Num Entries "<<numEntries<<std::endl;
+    numEntries/=5;
     for(int event=0; event<numEntries; event++){ //loop over those entries
         eventTree->GetEntry(event); //get the event
         
@@ -140,7 +140,6 @@ int main(int argc, char **argv)
                 for(int chan=0; chan<16; chan++){
                     TGraph *grRaw = realAtriEvPtr->getGraphFromRFChan(chan);
                     TGraph *grInt = FFTtools::getInterpolatedGraph(grRaw, 0.5);
-                    std::cout<<"grRaw length (after interp) is "<<grRaw->GetN()<<std::endl;
                     TGraph *grPad = FFTtools::padWaveToLength(grInt,1024);
                     TGraph *spec = makeFreqV_MilliVoltsNanoSeconds(grPad);
                     for(int samp=0; samp<512; samp++){
@@ -200,39 +199,6 @@ int main(int argc, char **argv)
     delete fpIn;
 }//close the main program
 
-TGraph *makeFFTPlot(TGraph *grWave)
-{
-    double *oldY = grWave->GetY();
-    double *oldX = grWave->GetX();
-    double deltaT=oldX[1]-oldX[0];
-    int length=grWave->GetN();
-    FFTWComplex *theFFT=FFTtools::doFFT(length,oldY);
-     
-    int newLength=(length/2)+1;
-     
-    double *newY = new double [newLength];
-    double *newX = new double [newLength];
-     
-    double deltaF=1/(deltaT*length); //Hz
-    deltaF*=1e3; //MHz
-       
-    double tempF=0;
-    for(int i=0;i<newLength;i++) {
-        float power=FFTtools::getAbs(theFFT[i]);//converting from mV to V;
-        if(i>0 && i<newLength-1) power*=2; //account for symmetry
-        power*=sqrt(deltaT)/(length); //For time-integral squared amplitude
-        power/=sqrt(deltaF);//Just to normalise bin-widths
-        newX[i]=tempF;
-        newY[i]=power; //Units should be mV/MhZ for the y-axis.
-        tempF+=deltaF;
-    }
-   
-    TGraph *grPower = new TGraph(newLength,newX,newY);
-    delete [] theFFT;
-    delete [] newY;
-    delete [] newX;
-    return grPower;
-}
 
 TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave ) {
     double *oldY = grWave->GetY(); // mV
@@ -253,7 +219,8 @@ TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave ) {
         // So in the time domain, remember voltage = sqrt(power),
         // we need to correct by sqrt(2).
         
-        newY[i] = sqrt(2.) * FFTtools::getAbs(theFFT[i]); // from mV to V
+        // newY[i] = sqrt(2./double(grWave->GetN())) * FFTtools::getAbs(theFFT[i]); // from mV to V
+        newY[i] = FFTtools::getAbs(theFFT[i])*1E-3; // mV to V
         newX[i]=tempF;
         tempF+=deltaF;
     }
@@ -261,20 +228,19 @@ TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave ) {
 
     // check Parseval
 
-    // time domain
-    double power_time = 0;
-    for(int i=0; i<grWave->GetN(); i++ ){
-        power_time += TMath::Power(grWave->GetY()[i], 2.);
-    }
+    // // time domain
+    // double power_time = 0;
+    // for(int i=0; i<grWave->GetN(); i++ ){
+    //     power_time += TMath::Power(grWave->GetY()[i], 2.);
+    // }
 
-    // frequency domain
-    double power_freq = 0;
-    for(int i=0; i<grSpectrum->GetN(); i++){
-        power_freq += TMath::Power(grSpectrum->GetY()[i], 2.);
-    }
-    power_freq/=double(grWave->GetN());
+    // // frequency domain
+    // double power_freq = 0;
+    // for(int i=0; i<grSpectrum->GetN(); i++){
+    //     power_freq += TMath::Power(grSpectrum->GetY()[i], 2.);
+    // }
 
-    std::cout<<"Power time "<<power_time<<" and power frequency "<<power_freq<<std::endl;
+    // std::cout<<"Power time "<<power_time<<" and power frequency "<<power_freq<<std::endl;
 
     delete [] theFFT;
     delete [] newY;
