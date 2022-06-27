@@ -119,3 +119,27 @@ def get_single_event_AraSim(rootFile, eventNumber, chID, pad=None):
         gr = ROOT.FFTtools.padWaveToLength(gr, pad)
     return gr
 
+def get_single_softevent_data(rootFile, softEventNumber, chID, pad=None):
+
+    file = ROOT.TFile.Open(rootFile)
+    eventTree = file.Get("eventTree")
+    rawEvent = ROOT.RawAtriStationEvent()
+    eventTree.SetBranchAddress("event", ROOT.AddressOf(rawEvent))
+    numEvents = eventTree.GetEntries()
+    numSoftEventsFound = 0
+    for i in range(numEvents):
+        eventTree.GetEntry(i)
+        if(rawEvent.isSoftwareTrigger()):
+            if(numSoftEventsFound==softEventNumber):
+                usefulEvent = ROOT.UsefulAtriStationEvent(rawEvent, ROOT.AraCalType.kLatestCalib)
+                gr = usefulEvent.getGraphFromRFChan(chID)
+                if pad is not None:
+                    grInt = ROOT.FFTtools.getInterpolatedGraph(gr, 0.5)
+                    grPad = ROOT.FFTtools.padWaveToLength(grInt, pad)
+                    del gr, grInt, usefulEvent
+                    return grPad
+                else:
+                    del usefulEvent
+                    return gr
+            else:
+                numSoftEventsFound+=1

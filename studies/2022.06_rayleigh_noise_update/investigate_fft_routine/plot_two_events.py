@@ -23,7 +23,7 @@ file2 = '/home/brian/ARA/ara5_analysis/tools/AraSim/AraOut.noise_setup_1024.txt.
 
 
 the_norm = 'standard'
-# the_norm = 'dT'
+the_norm = 'dT'
 # the_norm = 'dTdF'
 
 print("The Norm is {} ".format(the_norm))
@@ -93,19 +93,19 @@ if the_norm == 'standard':
     time_norm_2 = 1.
     freq_norm_1 = 1.
     freq_norm_2 = 1.
-    the_freq_ylabel = 'Spectrum [V]'
+    the_freq_ylabel = 'H   [V]'
 if the_norm == 'dT':
     time_norm_1 = dT1
     time_norm_2 = dT2
     freq_norm_1 = 1.
     freq_norm_2 = 1.
-    the_freq_ylabel = r'Spectrum [V / $\sqrt{Hz}$]'
+    the_freq_ylabel = r'H   [V / $\sqrt{Hz}$]'
 elif the_norm == 'dTdF':
     time_norm_1 = dT1
     time_norm_2 = dT2
     freq_norm_1 = dF1
     freq_norm_2 = dF2
-    the_freq_ylabel = r'Spectrum [V $\cdot$ s]'
+    the_freq_ylabel = r'H   [V $\cdot$ s]'
 
 
 # double check parseval's theorem ("time-integral squared amplitude version")
@@ -131,8 +131,8 @@ print("Power Freq Spec 2 {:.3e}".format(power_fft2))
 
 # spectra
 
-axs[1].plot(freqs1, fft1_ave**2)
-axs[1].plot(freqs2, fft2_ave**2, ls='--')
+axs[1].plot(freqs1, fft1_ave)
+axs[1].plot(freqs2, fft2_ave, ls='--')
 
 axs[1].set_xlabel('Frequency [Hz]')
 axs[1].set_ylabel(the_freq_ylabel)
