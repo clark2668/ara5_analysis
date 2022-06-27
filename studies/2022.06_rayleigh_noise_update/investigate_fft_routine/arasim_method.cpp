@@ -82,8 +82,6 @@ int main(int argc, char **argv)
                 spectrum_doFFT[i]/spectrum_realft[i]
             );
         }
-
-
     }
 
     bool findNormalization = false;
