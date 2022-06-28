@@ -56,12 +56,13 @@ int main(int argc, char **argv)
     inTree->SetBranchAddress("chan_spec", &chan_spec);
     inTree->SetBranchAddress("freqs", &freqs);
 
-    TH1D *h = new TH1D("","",200,0.,2.);
+    TH1D *h = new TH1D("","",200,0.,2E-6);
 
     double numEntries = inTree -> GetEntries(); //get the number of entries in this file
     for(int event=0; event<numEntries; event++){ //loop over those entries
         inTree->GetEntry(event); //get the event
         h->Fill(chan_spec[chan][freq_bin]);
+        // std::cout<<"Spectral value is "<<chan_spec[chan][freq_bin]<<std::endl;
     }
 
     h->Sumw2();
@@ -98,7 +99,8 @@ int main(int argc, char **argv)
     char title_txt[200];
     sprintf(title_txt,"sigmavsfreq_ch%d.txt",chan);
     FILE *fout = fopen(title_txt, "a");
-    fprintf(fout,"%2.4f,%d,%2.4f,%2.4f  \n",freqs[chan][freq_bin],chan,p1,chi2);
+    // fprintf(fout,"%2.4f,%d,%2.4f,%2.4f  \n",freqs[chan][freq_bin]/1.E6,chan,p1,chi2); // stash this as MHz, not Hz
+    fprintf(fout,"%2.4f,%d,%.3e,%2.4f  \n",freqs[chan][freq_bin]/1.E6,chan,p1,chi2); // stash this as MHz, not Hz
     fclose(fout);//close sigmavsfreq.txt file
 
     // TCanvas *c = new TCanvas("","",1100,850);

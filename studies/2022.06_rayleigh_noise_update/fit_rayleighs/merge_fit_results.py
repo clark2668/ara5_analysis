@@ -18,7 +18,9 @@ final_df = None
 
 final_labels = ['Ch0']
 
-for i in range(1, 16):
+# for i in range(1, 16):
+for i in np.zeros(15):
+    i = int(i)
     df_new = pd.read_csv('sigmavsfreq_ch{}.txt'.format(i))
     df_new.drop(columns=['ChiSquare', 'Channel'], axis=1, inplace=True)
     remove_outliers(df_new)
@@ -35,4 +37,4 @@ for i in range(1, 16):
 
 final_df.set_index('Frequency', inplace=True)
 final_df.drop_duplicates(inplace=True)
-final_df.to_csv('test.txt', header=final_labels, float_format='%.4f')
+final_df.to_csv('test.txt', header=final_labels, float_format='%.3e')
