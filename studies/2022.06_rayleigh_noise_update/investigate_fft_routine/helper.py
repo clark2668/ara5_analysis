@@ -134,7 +134,7 @@ def get_single_softevent_data(rootFile, softEventNumber, chID, pad=None):
                 usefulEvent = ROOT.UsefulAtriStationEvent(rawEvent, ROOT.AraCalType.kLatestCalib)
                 gr = usefulEvent.getGraphFromRFChan(chID)
                 if pad is not None:
-                    grInt = ROOT.FFTtools.getInterpolatedGraph(gr, 0.5)
+                    grInt = ROOT.FFTtools.getInterpolatedGraph(gr, 0.25)
                     grPad = ROOT.FFTtools.padWaveToLength(grInt, pad)
                     del gr, grInt, usefulEvent
                     return grPad
