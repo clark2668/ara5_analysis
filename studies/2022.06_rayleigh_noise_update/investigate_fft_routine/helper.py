@@ -4,6 +4,7 @@ import array as array
 import ROOT
 import os 
 from ROOT import gInterpreter, gSystem, TChain
+import copy
 
 
 ROOT.gSystem.Load(os.environ.get('ARA_UTIL_INSTALL_DIR')+"/lib/libAraEvent.so")
@@ -143,3 +144,31 @@ def get_single_softevent_data(rootFile, softEventNumber, chID, pad=None):
                     return gr
             else:
                 numSoftEventsFound+=1
+
+def get_all_volts_from_AraSim_file(rootFile, chID, interp=None):
+    
+    all_volts = []
+    
+    file = ROOT.TFile.Open(rootFile)
+    eventTree = file.Get("eventTree")
+    realEvent = ROOT.UsefulAtriStationEvent()
+    eventTree.SetBranchAddress("UsefulAtriStationEvent", ROOT.AddressOf(realEvent))
+    numEvents = eventTree.GetEntries()    
+    for i in range(numEvents):
+        eventTree.GetEntry(i)
+        gr = realEvent.getGraphFromRFChan(chID)
+
+        if interp is not None:
+            grInt = ROOT.FFTtools.getInterpolatedGraph(gr, interp)
+            del gr
+            gr = copy.deepcopy(grInt)
+            del grInt
+
+        volts = gr.GetY()
+        for i in range(gr.GetN()):
+            all_volts.append(volts[i])
+        del gr
+    file.Close()
+    
+    return all_volts
+
