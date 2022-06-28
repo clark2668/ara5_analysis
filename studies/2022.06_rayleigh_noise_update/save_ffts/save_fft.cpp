@@ -210,17 +210,21 @@ TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave ) {
     double *newY = new double [newLength];
     double *newX = new double [newLength];
     double deltaF=1./(deltaT*(double)length); //Hz
-    deltaF*=1E-6; // from Hz to MHz
     double tempF=0;
     for(int i=0;i<newLength;i++) {
         
-        // Half of the power is missing in this FFT convention
-        // because we have no negative frequencies.
-        // So in the time domain, remember voltage = sqrt(power),
-        // we need to correct by sqrt(2).
-        
+       
         // newY[i] = sqrt(2./double(grWave->GetN())) * FFTtools::getAbs(theFFT[i]); // from mV to V
-        newY[i] = FFTtools::getAbs(theFFT[i])*1E-3; // mV to V
+
+        // normalize by N and deltaF for export to AraSim
+        // this is necessary so that AraSim can scale the sigma values to different
+        // length of waveform and frequency bin width step
+        double temp = FFTtools::getAbs(theFFT[i]);
+        temp *= 1E-3; // convert from mV to V
+        temp /= double(length);
+        temp /= sqrt(deltaF);
+
+        newY[i] = temp;
         newX[i]=tempF;
         tempF+=deltaF;
     }
