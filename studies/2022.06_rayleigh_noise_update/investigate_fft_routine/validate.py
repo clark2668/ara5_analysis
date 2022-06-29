@@ -24,16 +24,7 @@ calibrator.setAtriPedFile(ped_file, 2)
 
 
 settings = {
-    # 2: {'dt':3, 'N':500,  'interp': None  },
-    # 6: {'dt':4, 'N':500,  'interp': None  },
-    0: {'dt':5, 'N':500,  'interp': 0.5  },
-    1: {'dt':5, 'N':500,  'interp': 0.9  },
-    # 0: {'dt':5, 'N':500,  'interp': None  },
-    # 5: {'dt':6, 'N':500,  'interp': None  },
-    # 1: {'dt':7, 'N':500,  'interp': None  },
-    # 3: {'dt':8, 'N':500,  'interp': None  },
-    # 4: {'dt':9, 'N':500,  'interp': None  },
-    # 3: {'dt':2, 'N':300,  'interp': None  }
+    3: {'dt':3, 'N':700,  'interp': None , 'filt': False},
 }
 
 voltage_arrays = {
@@ -46,13 +37,16 @@ for this_set in settings:
     this_dt = these_settings['dt']
     this_N = these_settings['N']
     this_interp = these_settings['interp']
+    this_filt = these_settings['filt']
     top_dir = '/home/brian/ARA/ara5_analysis/tools/AraSim/'
     sim_file = f'{top_dir}/AraOut.noise_setup_dt_{this_dt}_N_{this_N}.root'
-
-    volts = helper.get_all_volts_from_AraSim_file(sim_file, 0, this_interp)
+    volts = helper.get_all_volts_from_AraSim_file(sim_file, 0, this_interp, this_filt)
     voltage_arrays[this_set] = volts
 
-line_styles = ['-', '--', '-.', ':', '-', '--', '-.']
+line_styles = ['-', '--', '-.', ':', '-', '--', '-.', ':','-', '--', '-.', ':']
+
+the_stds = []
+the_dts = []
 
 fig, axs = plt.subplots(1,2,figsize=(10,5))
 bins = np.linspace(-100, 100, 50)
@@ -62,12 +56,19 @@ for this_set in settings:
     this_dt = these_settings['dt']
     this_N = these_settings['N']
     this_interp = these_settings['interp']
+    this_filt = these_settings['filt']
 
     axs[0].hist(voltage_arrays[this_set], bins=bins, histtype='step', density=True, ls=line_styles[this_set],
-        label=r'Sim, dT={:.2f} ns, N = {}, Interp={}, $\sigma$= {:.4e}'.format(
-            this_dt*1E-10/1E-9, this_N, this_interp,
+        label=r'Sim, dT={:.2f} ns, N = {}, LP Filter? {}, $\sigma$= {:.4e}'.format(
+            this_dt*1E-10/1E-9, this_N, this_filt,
             np.std(voltage_arrays[this_set]))
         )
+        
+    the_dts.append(this_dt)
+    the_stds.append(np.std(voltage_arrays[this_set]))
+
+the_stds = np.asarray(the_stds)
+the_dts = np.asarray(the_dts)
 
 axs[0].set_xlabel('Voltage [mV]')
 axs[0].set_ylabel('Norm Counts')
@@ -76,8 +77,13 @@ axs[0].legend(
     loc='upper center',
     bbox_to_anchor=(0.5, 1.35)
 )
+
+axs[1].plot(the_dts*1E-10/1E-9, the_stds, 'o')
+axs[1].set_xlabel('TIMESTEP [ns]')
+axs[1].set_ylabel('RMS Noise')
+
 plt.tight_layout()
-fig.savefig('validate.png')
+fig.savefig('validate_rms.png')
 
 
 

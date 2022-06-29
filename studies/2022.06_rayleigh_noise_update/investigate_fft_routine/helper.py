@@ -5,6 +5,7 @@ import ROOT
 import os 
 from ROOT import gInterpreter, gSystem, TChain
 import copy
+import matplotlib.pyplot as plt
 
 
 ROOT.gSystem.Load(os.environ.get('ARA_UTIL_INSTALL_DIR')+"/lib/libAraEvent.so")
@@ -145,8 +146,38 @@ def get_single_softevent_data(rootFile, softEventNumber, chID, pad=None):
             else:
                 numSoftEventsFound+=1
 
-def get_all_volts_from_AraSim_file(rootFile, chID, interp=None):
+
+def get_all_volts_from_data_file(rootFile, chID):
+
+    all_volts = []
+    file = ROOT.TFile.Open(rootFile)
+    eventTree = file.Get("eventTree")
+    rawEvent = ROOT.RawAtriStationEvent()
+    eventTree.SetBranchAddress("event", ROOT.AddressOf(rawEvent))
+    numEvents = eventTree.GetEntries()
+    numSoftEventsFound = 0
+    for i in range(numEvents):
+        eventTree.GetEntry(i)
+        if(rawEvent.isSoftwareTrigger()):
+            usefulEvent = ROOT.UsefulAtriStationEvent(rawEvent, ROOT.AraCalType.kLatestCalib)
+            gr = usefulEvent.getGraphFromRFChan(chID)
+
+            volts = gr.GetY()
+            for i in range(gr.GetN()):
+                all_volts.append(volts[i])
+            del gr
+    file.Close()
+    return all_volts
+
+
+
+def get_all_volts_from_AraSim_file(rootFile, chID, interp=None, filter=False):
     
+    if filter:
+        nyquist = 1./(2*interp*1E-9) # interp speed in ns
+        freq_lowpass = 900E6/nyquist # lowpass filter at 900 MHz (comfortably in the ARA band)
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 5, freq_lowpass)
+
     all_volts = []
     
     file = ROOT.TFile.Open(rootFile)
@@ -160,8 +191,18 @@ def get_all_volts_from_AraSim_file(rootFile, chID, interp=None):
 
         if interp is not None:
             grInt = ROOT.FFTtools.getInterpolatedGraph(gr, interp)
+            if filter:
+                but.filterGraph(grInt)
             del gr
             gr = copy.deepcopy(grInt)
+            
+            # gr1 = ROOT.FFTtools.padWaveToLength(gr, 1024)
+            # freqs, fft = do_fft_with_python(gr1)
+            # fig, axs = plt.subplots(1,2,figsize=(10,5))
+            # axs[0].plot(freqs, fft)
+            # fig.savefig('demo_filter_{}.png'.format(filter))
+            # del gr1
+            
             del grInt
 
         volts = gr.GetY()
