@@ -28,6 +28,7 @@
 #include "TFile.h"
 #include "TGraph.h"
 #include "TCanvas.h"
+#include "DigitalFilter.h"
 
 RawAtriStationEvent *rawAtriEvPtr;
 UsefulAtriStationEvent *realAtriEvPtr;
@@ -45,6 +46,13 @@ int main(int argc, char **argv)
 
     int isSimulation = atoi(argv[3]);
     int runNumber = atoi(argv[4]);
+
+    // prepare a bandpass filter
+    double dT = 0.5; // ns
+    int padLength = 1024; // the length to which we will pad
+    double nyquist = 1./(2.*dT*1E-9); // interp time step converted to ns
+    double freq_lp = 900E6/nyquist; // lowpass filter at 900 MHz
+    FFTtools::ButterworthFilter but_LP(FFTtools::LOWPASS, 2, freq_lp);
 
     TFile *fpIn = new TFile(argv[2], "OLD"); //we're going to open the data file
     if(!fpIn){
@@ -139,8 +147,9 @@ int main(int argc, char **argv)
 
                 for(int chan=0; chan<16; chan++){
                     TGraph *grRaw = realAtriEvPtr->getGraphFromRFChan(chan);
-                    TGraph *grInt = FFTtools::getInterpolatedGraph(grRaw, 0.5);
-                    TGraph *grPad = FFTtools::padWaveToLength(grInt,1024);
+                    TGraph *grInt = FFTtools::getInterpolatedGraph(grRaw, dT);
+                    TGraph *grPad = FFTtools::padWaveToLength(grInt,padLength);
+                    but_LP.filterGraph(grPad); // apply lowpass filter
                     TGraph *spec = makeFreqV_MilliVoltsNanoSeconds(grPad);
                     for(int samp=0; samp<512; samp++){
                         chan_spec[chan][samp]=spec->GetY()[samp];
@@ -216,13 +225,14 @@ TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave ) {
        
         // newY[i] = sqrt(2./double(grWave->GetN())) * FFTtools::getAbs(theFFT[i]); // from mV to V
 
-        // normalize by N and deltaF for export to AraSim
+        // normalize by N and sqrt(deltaF) for export to AraSim
         // this is necessary so that AraSim can scale the sigma values to different
         // length of waveform and frequency bin width step
         double temp = FFTtools::getAbs(theFFT[i]);
+        temp *= 2.; // account for "no negative frequencies", so we need a factor of two
         temp *= 1E-3; // convert from mV to V
-        temp /= double(length);
-        temp /= sqrt(deltaF);
+        temp /= double(length); // account for trace length
+        temp /= sqrt(deltaF); // account for frequency bin width
 
         newY[i] = temp;
         newX[i]=tempF;
