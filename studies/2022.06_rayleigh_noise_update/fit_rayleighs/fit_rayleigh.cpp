@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     inTree->SetBranchAddress("chan_spec", &chan_spec);
     inTree->SetBranchAddress("freqs", &freqs);
 
-    TH1D *h = new TH1D("","",200,0.,2E-6);
+    TH1D *h = new TH1D("","",400,0.,4E-6);
 
     double numEntries = inTree -> GetEntries(); //get the number of entries in this file
     for(int event=0; event<numEntries; event++){ //loop over those entries
@@ -106,8 +106,11 @@ int main(int argc, char **argv)
     // TCanvas *c = new TCanvas("","",1100,850);
     // h->Draw("E");
     // h->Draw("");
+    // // h->GetXaxis()->SetTitle("Spectral Amplitude H [ V#sqrt{s} ]");
+    // h->GetXaxis()->SetTitle("Spectral Amplitude H [ V/#sqrt{Hz} ]");
+    // h->GetYaxis()->SetTitle("Normalized Counts");
     // char hist_title[300];
-    // sprintf(hist_title,"Freq Bin %d: %.2f ",freq_bin,freqs[chan][freq_bin]);
+    // sprintf(hist_title,"Freq Bin %d: %.2f MHz",freq_bin,freqs[chan][freq_bin]/1.E6);
     // h->SetTitle(hist_title);
     // char save_title[300];
     // sprintf(save_title,"../plots/fits_ch%d_f%d.png",chan,freq_bin);
