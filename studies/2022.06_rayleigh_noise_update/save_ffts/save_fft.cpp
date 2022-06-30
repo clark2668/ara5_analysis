@@ -35,7 +35,7 @@ UsefulAtriStationEvent *realAtriEvPtr;
 
 using namespace std;
 
-TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave );
+TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave, int numNonZeroPoints );
 
 int main(int argc, char **argv)
 {
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
     // prepare a bandpass filter
     double dT = 0.5; // ns
-    int padLength = 1024; // the length to which we will pad
+    const int padLength = 1024; // the length to which we will pad
     double nyquist = 1./(2.*dT*1E-9); // interp time step converted to ns
     double freq_lp = 900E6/nyquist; // lowpass filter at 900 MHz
     FFTtools::ButterworthFilter but_LP(FFTtools::LOWPASS, 2, freq_lp);
@@ -98,10 +98,12 @@ int main(int argc, char **argv)
     sprintf(outfile_name,"%s/fft_run%d.root",argv[1],runNumber);
     TFile *fpOut = TFile::Open(outfile_name, "RECREATE");
     TTree* outTree = new TTree("outTree", "outTree");
-    double chan_spec[16][512]={{0}};
-    double freqs[16][512]={0};
-    outTree->Branch("chan_spec", &chan_spec, "chan_spec[16][512]/D");
-    outTree->Branch("freqs", &freqs, "freqs[16][512]/D");
+    double chan_spec[16][padLength/2]={{0}};
+    double freqs[16][padLength/2]={0};
+    // outTree->Branch("chan_spec", &chan_spec, "chan_spec[16][512]/D");
+    // outTree->Branch("freqs", &freqs, "freqs[16][512]/D");
+    outTree->Branch("chan_spec", &chan_spec, TString::Format("chan_spec[16][%d]/D", padLength/2));
+    outTree->Branch("freqs", &freqs, TString::Format("freqs[16][%d]/D", padLength/2));
 
     fpIn->cd();
     double numEntries = eventTree -> GetEntries(); //get the number of entries in this file
@@ -109,7 +111,7 @@ int main(int argc, char **argv)
     AraQualCuts *qual = AraQualCuts::Instance();
     int num_found=0;
     std::cout<<"Num Entries "<<numEntries<<std::endl;
-    numEntries/=5;
+    if(!isSimulation) numEntries/=5;
     for(int event=0; event<numEntries; event++){ //loop over those entries
         eventTree->GetEntry(event); //get the event
         
@@ -148,10 +150,12 @@ int main(int argc, char **argv)
                 for(int chan=0; chan<16; chan++){
                     TGraph *grRaw = realAtriEvPtr->getGraphFromRFChan(chan);
                     TGraph *grInt = FFTtools::getInterpolatedGraph(grRaw, dT);
+                    int numIngrInt = grInt->GetN();
+                    // std::cout<<"Num in grInt "<<numIngrInt<<std::endl;
                     TGraph *grPad = FFTtools::padWaveToLength(grInt,padLength);
                     but_LP.filterGraph(grPad); // apply lowpass filter
-                    TGraph *spec = makeFreqV_MilliVoltsNanoSeconds(grPad);
-                    for(int samp=0; samp<512; samp++){
+                    TGraph *spec = makeFreqV_MilliVoltsNanoSeconds(grPad,numIngrInt);
+                    for(int samp=0; samp<padLength/2; samp++){
                         chan_spec[chan][samp]=spec->GetY()[samp];
                         freqs[chan][samp]=spec->GetX()[samp];
                     }
@@ -209,7 +213,7 @@ int main(int argc, char **argv)
 }//close the main program
 
 
-TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave ) {
+TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave, int numNonZeroPoints ) {
     double *oldY = grWave->GetY(); // mV
     double *oldX = grWave->GetX(); // ns
     int length=grWave->GetN();
@@ -228,11 +232,13 @@ TGraph *makeFreqV_MilliVoltsNanoSeconds ( TGraph *grWave ) {
         // normalize by N and sqrt(deltaF) for export to AraSim
         // this is necessary so that AraSim can scale the sigma values to different
         // length of waveform and frequency bin width step
+        // NB: This is the dF and num bins from the UNPADDED waveform
         double temp = FFTtools::getAbs(theFFT[i]);
-        temp *= 2.; // account for "no negative frequencies", so we need a factor of two
+
         temp *= 1E-3; // convert from mV to V
-        temp /= double(length); // account for trace length
-        temp /= sqrt(deltaF); // account for frequency bin width
+        double origdF = 1./(deltaT * double(numNonZeroPoints)); // calculate the original dF (before padding)
+        temp /= sqrt(origdF); // account for frequency bin width (in the *unpadded* trace)
+        temp /= double(numNonZeroPoints); // account for trace length (in the *unpadded* trace)
 
         newY[i] = temp;
         newX[i]=tempF;
