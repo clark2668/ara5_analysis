@@ -3,13 +3,13 @@ import pandas as pd
 import numpy as np
 
 def remove_outliers(the_dataframe):
-    the_dataframe.loc[the_dataframe.Fit > 50, 'Fit'] = np.nan
-    the_dataframe.loc[the_dataframe.Fit < 0, 'Fit'] = np.nan
+    the_dataframe.loc[the_dataframe.Fit > 1E-5, 'Fit'] = np.nan # remove tall peaks
+    the_dataframe.loc[the_dataframe.Fit < 0, 'Fit'] = np.nan # remove negative numbers
     mask = np.isnan(the_dataframe.Fit)
     the_dataframe.Fit[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), the_dataframe.Fit[~mask])
 
 
-base = pd.read_csv('sigmavsfreq_ch0_pad1024.txt')
+base = pd.read_csv('sigmavsfreq_ch0.txt')
 base.sort_values(by='Frequency', inplace=True)
 base.drop(columns=['ChiSquare', 'Channel'], axis=1, inplace=True)
 remove_outliers(base)
@@ -19,10 +19,11 @@ final_df = None
 
 final_labels = ['Ch0']
 
-# for i in range(1, 16):
-for i in np.zeros(15):
+
+for i in range(1, 16):
+# for i in np.zeros(15):
     i = int(i)
-    df_new = pd.read_csv('sigmavsfreq_ch{}_pad1024.txt'.format(i))
+    df_new = pd.read_csv('sigmavsfreq_ch{}.txt'.format(i))
     df_new.sort_values(by='Frequency', inplace=True)
     df_new.drop(columns=['ChiSquare', 'Channel'], axis=1, inplace=True)
     remove_outliers(df_new)

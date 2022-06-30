@@ -9,7 +9,9 @@ with open(dag_file_name, 'w') as f:
 
 
 master_index = 0
-for channel in range(1):
+# for bin in range(512):
+    # for channel in range(16):
+for channel in range(16):
     for bin in range(512):
         instructions = ""
         instructions += f"JOB job_{master_index} fit_rayleigh.htc \n"
