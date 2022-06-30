@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     delete f;
 
     char title_txt[200];
-    sprintf(title_txt,"sigmavsfreq_ch%d.txt",chan);
+    sprintf(title_txt,"fits/sigmavsfreq_ch%d_bin%d.txt",chan,freq_bin);
     FILE *fout = fopen(title_txt, "a");
     // fprintf(fout,"%2.4f,%d,%2.4f,%2.4f  \n",freqs[chan][freq_bin]/1.E6,chan,p1,chi2); // stash this as MHz, not Hz
     fprintf(fout,"%2.4f,%d,%.3e,%2.4f  \n",freqs[chan][freq_bin]/1.E6,chan,p1,chi2); // stash this as MHz, not Hz
