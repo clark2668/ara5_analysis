@@ -28,7 +28,7 @@ def get_t_v_arrays(graph):
     return t, v
 
 
-def do_fft_with_python(graph, norm='standard'):
+def do_fft_with_python(graph, norm='standard', grIntLength=1024):
 
     """
 
@@ -77,22 +77,23 @@ def do_fft_with_python(graph, norm='standard'):
     length = len(volts)
     dT = (times[1] - times[0])
     freqs = np.fft.rfftfreq(length, dT)
+    freqs_old = np.fft.rfftfreq(grIntLength, dT)
     dF = (freqs[1] - freqs[0])
+    dF_old = (freqs_old[1] - freqs_old[0])
     
-    if norm not in ['standard', 'dT', 'dTdF']:
+    if norm not in ['standard', 'dT', 'dTdF', 'rayleigh']:
         raise Exception(f"requested normalization ({norm}) is not implemened")
 
-    the_norm = np.sqrt(2./length) # always start with this
-    the_extra_norm = 1.
+    the_norm =1  # always start with this
     
     if norm=='standard':
-        the_extra_norm = 1.
+        the_norm = np.sqrt(2./grIntLength)
     elif norm=='dT':
-        the_extra_norm = np.sqrt(dT)
+        the_norm = np.sqrt(2./grIntLength) * np.sqrt(dT)
     elif norm=='dTdF':
-        the_extra_norm = np.sqrt(dT / dF)
-    
-    the_norm *= the_extra_norm
+        the_norm = np.sqrt(2./grIntLength) * np.sqrt(dT / dF_old)
+    elif norm=='rayleigh':
+        the_norm = 1./(np.sqrt(dF_old) * grIntLength)
 
     fft = the_norm * np.abs(np.fft.rfft(volts)) # no negative frequencies
 
@@ -146,70 +147,130 @@ def get_single_softevent_data(rootFile, softEventNumber, chID, pad=None):
             else:
                 numSoftEventsFound+=1
 
+def handle_wavform(gr, interp=None, pad=None, filter=False):
+    
+    # if we adjust the waveform, we always start with interpolation
+    grIntLength = None
+    if interp is not None:
+        grInt = ROOT.FFTtools.getInterpolatedGraph(gr, interp)
+        grIntLength = grInt.GetN()
+        del gr
+        gr = copy.deepcopy(grInt)
+        del grInt
+    
+        # pad if requested
+        if pad is not None:
+            grPad = ROOT.FFTtools.padWaveToLength(gr, pad)
+            del gr
+            gr = copy.deepcopy(grPad)
+            del grPad
+        
+        # filter if requested
+        if filter is not None:
+            filter.filterGraph(gr)
+        
+        # gr1 = ROOT.FFTtools.padWaveToLength(gr, 1024)
+        # freqs, fft = do_fft_with_python(gr1)
+        # fig, axs = plt.subplots(1,2,figsize=(10,5))
+        # axs[0].plot(freqs, fft)
+        # fig.savefig('demo_filter_{}.png'.format(filter))
+        # del gr1
+    
+    return gr, grIntLength
 
-def get_all_volts_from_data_file(rootFile, chID):
 
+def get_all_volts_from_data_file(rootFile, chID, interp=None, pad=None, the_filter=False, do_freq_spec=False):
+
+    if the_filter:
+        nyquist = 1./(2*interp*1E-9) # interp speed in ns
+        freq_lowpass = 900E6/nyquist # lowpass filter at 900 MHz (comfortably in the ARA band)
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 5, freq_lowpass)
+    else:
+        but = None
+
+    avg_freqs = None
+    avg_spec = None
     all_volts = []
+
     file = ROOT.TFile.Open(rootFile)
     eventTree = file.Get("eventTree")
     rawEvent = ROOT.RawAtriStationEvent()
     eventTree.SetBranchAddress("event", ROOT.AddressOf(rawEvent))
     numEvents = eventTree.GetEntries()
-    numSoftEventsFound = 0
+    numEvents=1000
+    numFound = 0
     for i in range(numEvents):
         eventTree.GetEntry(i)
         if(rawEvent.isSoftwareTrigger()):
             usefulEvent = ROOT.UsefulAtriStationEvent(rawEvent, ROOT.AraCalType.kLatestCalib)
             gr = usefulEvent.getGraphFromRFChan(chID)
 
+            if interp or pad or the_filter or do_freq_spec:
+                gr, grIntLength = handle_wavform(gr, interp, pad, but)
+
+                if do_freq_spec:
+                    freqs, fft = do_fft_with_python(gr, 'rayleigh', grIntLength)
+                    if avg_freqs is None:
+                        avg_freqs = copy.deepcopy(freqs)
+                    if avg_spec is None:
+                        avg_spec = copy.deepcopy(fft)
+                    elif avg_spec is not None:
+                        avg_spec += fft
+                    numFound+=1
+
             volts = gr.GetY()
             for i in range(gr.GetN()):
                 all_volts.append(volts[i])
             del gr
     file.Close()
-    return all_volts
+    if do_freq_spec:
+        avg_spec/=numFound
+    return all_volts, avg_freqs, avg_spec
 
 
 
-def get_all_volts_from_AraSim_file(rootFile, chID, interp=None, filter=False):
+def get_all_volts_from_AraSim_file(rootFile, chID, interp=None, pad=None, the_filter=False, do_freq_spec=False):
     
-    if filter:
+    if the_filter:
         nyquist = 1./(2*interp*1E-9) # interp speed in ns
         freq_lowpass = 900E6/nyquist # lowpass filter at 900 MHz (comfortably in the ARA band)
-        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 5, freq_lowpass)
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, freq_lowpass)
+    else:
+        but = None
 
+    avg_freqs = None
+    avg_spec = None
     all_volts = []
     
     file = ROOT.TFile.Open(rootFile)
     eventTree = file.Get("eventTree")
     realEvent = ROOT.UsefulAtriStationEvent()
     eventTree.SetBranchAddress("UsefulAtriStationEvent", ROOT.AddressOf(realEvent))
-    numEvents = eventTree.GetEntries()    
+    numEvents = eventTree.GetEntries()
+    numFound = 0
     for i in range(numEvents):
         eventTree.GetEntry(i)
         gr = realEvent.getGraphFromRFChan(chID)
 
-        if interp is not None:
-            grInt = ROOT.FFTtools.getInterpolatedGraph(gr, interp)
-            if filter:
-                but.filterGraph(grInt)
-            del gr
-            gr = copy.deepcopy(grInt)
-            
-            # gr1 = ROOT.FFTtools.padWaveToLength(gr, 1024)
-            # freqs, fft = do_fft_with_python(gr1)
-            # fig, axs = plt.subplots(1,2,figsize=(10,5))
-            # axs[0].plot(freqs, fft)
-            # fig.savefig('demo_filter_{}.png'.format(filter))
-            # del gr1
-            
-            del grInt
+        if interp or pad or the_filter or do_freq_spec:
+            gr, grIntLength = handle_wavform(gr, interp, pad, but)
+        
+            if do_freq_spec:
+                freqs, fft = do_fft_with_python(gr, 'rayleigh', grIntLength)
+                if avg_freqs is None:
+                    avg_freqs = copy.deepcopy(freqs)
+                if avg_spec is None:
+                    avg_spec = copy.deepcopy(fft)
+                elif avg_spec is not None:
+                    avg_spec += fft
+                numFound+=1
 
         volts = gr.GetY()
         for i in range(gr.GetN()):
             all_volts.append(volts[i])
         del gr
     file.Close()
-    
-    return all_volts
+    if do_freq_spec:
+        avg_spec/=numFound
+    return all_volts, avg_freqs, avg_spec
 
