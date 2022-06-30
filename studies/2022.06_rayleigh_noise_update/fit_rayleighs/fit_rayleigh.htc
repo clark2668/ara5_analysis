@@ -2,9 +2,9 @@
 #output = /scratch/brianclark/ARA/fitty_$(channel).out
 #error  = /scratch/brianclark/ARA/fitty_$(channel).err
 
-log    = /scratch/brian/ARA/fitty_$(channel).log
-output = /scratch/brian/ARA/fitty_$(channel).out
-error  = /scratch/brian/ARA/fitty_$(channel).err
+log    = /scratch/brian/ARA/fitty_$(channel)_$(bin).log
+output = /scratch/brian/ARA/fitty_$(channel)_$(bin).out
+error  = /scratch/brian/ARA/fitty_$(channel)_$(bin).err
 
 
 request_cpus = 1
@@ -18,6 +18,6 @@ should_transfer_files   = Yes
 when_to_transfer_output = ON_EXIT
 
 executable = fit_rayleigh.sh
-arguments = $(file) $(channel)
+arguments = $(file) $(channel) $(bin)
 
 queue

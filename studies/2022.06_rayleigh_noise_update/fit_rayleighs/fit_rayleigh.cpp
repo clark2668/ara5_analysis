@@ -51,8 +51,9 @@ int main(int argc, char **argv)
         std::cerr<<"Can't find outTree (silly naming...) in file" <<argv[2]<<endl;
         return -1;
     } //throw a warning if you can't open it
-    double chan_spec[16][512]={{0}};
-    double freqs[16][512]={0};
+    const int padLength = 512;
+    double chan_spec[16][padLength]={{0}};
+    double freqs[16][padLength]={0};
     inTree->SetBranchAddress("chan_spec", &chan_spec);
     inTree->SetBranchAddress("freqs", &freqs);
 
