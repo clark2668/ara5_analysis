@@ -30,8 +30,10 @@ bins = np.linspace(-100, 100, 50)
 # ### Time Domain Check
 # ##############
 
+chID = 0
+
 # data
-data_volts, data_freqs, data_spec = helper.get_all_volts_from_data_file(data_file, 0, interp=0.5, the_filter=True)
+data_volts, data_freqs, data_spec = helper.get_all_volts_from_data_file(data_file, chID, interp=0.5, the_filter=True)
 axs[0].hist(data_volts, bins=bins, histtype='step', density=True, 
     label=r'Data, $\sigma$= {:.1f}'.format(np.std(data_volts)),
     linewidth=3, alpha=0.8
@@ -40,7 +42,7 @@ print("Starting the look at simulation")
 # simulation
 top_dir = '/disk20/users/brian/ARA/sim/'
 sim_file = f'{top_dir}/AraOut.noise_setup_1024.txt.run40000.root'
-sim_volts, sim_freqs, sim_spec = helper.get_all_volts_from_AraSim_file(sim_file, 0)
+sim_volts, sim_freqs, sim_spec = helper.get_all_volts_from_AraSim_file(sim_file, chID)
 
 the_dt = 3
 the_N = 700
@@ -64,13 +66,13 @@ axs[0].legend(
 ##############
 
 data_volts, data_freqs, data_spec = helper.get_all_volts_from_data_file(
-    data_file, 0, 0.5, 1024, the_filter=True, do_freq_spec=True
+    data_file, chID, 0.5, 1024, the_filter=True, do_freq_spec=True
     )
 axs[1].plot(data_freqs/1E6, data_spec, label='Data', linewidth=2)
 
 
 sim_volts, sim_freqs, sim_spec = helper.get_all_volts_from_AraSim_file(
-    sim_file, 0, 0.5, 1024, the_filter=False, do_freq_spec=True
+    sim_file, chID, 0.5, 1024, the_filter=False, do_freq_spec=True
     )
 axs[1].plot(sim_freqs/1E6, sim_spec, ls='--', label='Sim', linewidth=2)
 
