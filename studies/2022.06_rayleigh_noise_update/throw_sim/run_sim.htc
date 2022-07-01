@@ -1,6 +1,11 @@
-log    = /scratch/brianclark/ARA/simmy_$(runnumber).log
-output = /scratch/brianclark/ARA/simmy_$(runnumber).out
-error  = /scratch/brianclark/ARA/simmy_$(runnumber).err
+#log    = /scratch/brianclark/ARA/simmy_$(runnumber).log
+#output = /scratch/brianclark/ARA/simmy_$(runnumber).out
+#error  = /scratch/brianclark/ARA/simmy_$(runnumber).err
+
+log    = /scratch/brian/ARA/simmy_$(runnumber).log
+output = /scratch/brian/ARA/simmy_$(runnumber).out
+error  = /scratch/brian/ARA/simmy_$(runnumber).err
+
 
 request_cpus = 1
 request_memory = 2GB
