@@ -147,7 +147,7 @@ def get_single_softevent_data(rootFile, softEventNumber, chID, pad=None):
             else:
                 numSoftEventsFound+=1
 
-def handle_wavform(gr, interp=None, pad=None, filter=False):
+def handle_wavform(gr, interp=None, pad=None, filters=[]):
     
     # if we adjust the waveform, we always start with interpolation
     grIntLength = None
@@ -165,9 +165,8 @@ def handle_wavform(gr, interp=None, pad=None, filter=False):
             gr = copy.deepcopy(grPad)
             del grPad
         
-        # filter if requested
-        if filter is not None:
-            filter.filterGraph(gr)
+        for f in filters:
+            f.filterGraph(gr)
         
         # gr1 = ROOT.FFTtools.padWaveToLength(gr, 1024)
         # freqs, fft = do_fft_with_python(gr1)
@@ -175,18 +174,36 @@ def handle_wavform(gr, interp=None, pad=None, filter=False):
         # axs[0].plot(freqs, fft)
         # fig.savefig('demo_filter_{}.png'.format(filter))
         # del gr1
-    
+
     return gr, grIntLength
 
 
-def get_all_volts_from_data_file(rootFile, chID, interp=None, pad=None, the_filter=False, do_freq_spec=False):
+def get_all_volts_from_data_file(rootFile, chID, interp=None, pad=None, apply_filters=False, do_freq_spec=False):
 
-    if the_filter:
-        nyquist = 1./(2*interp*1E-9) # interp speed in ns
-        freq_lowpass = 900E6/nyquist # lowpass filter at 900 MHz (comfortably in the ARA band)
-        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 5, freq_lowpass)
-    else:
-        but = None
+    nyquist = 1./(2*interp*1E-9) # interp speed in ns
+    freq_lowpass = 900E6/nyquist # lowpass filter at 900 MHz (comfortably in the ARA band)
+    freq_highpass = 90E6/nyquist # highpass filter at 130 MHz (comfortably (?) in the ARA band)
+
+    the_filters = []
+    # apparenty we need this line CUZ REASONS?
+    # it must activate something in FFTW behind the scenes. This was very not obvious, 
+    # and I don't understand how to fix it tbh...
+    
+    blehhhh = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, 100)
+    
+    if apply_filters == 'lowpass':
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, freq_lowpass)
+        the_filters.append(but)
+    elif apply_filters == 'highpass':
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.HIGHPASS, 2, freq_highpass)
+        the_filters.append(but)
+    elif apply_filters == 'bandpass':
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, freq_lowpass)
+        but2 = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.HIGHPASS, 2, freq_highpass)
+        the_filters.append(but)
+        the_filters.append(but2)
+    
+    print("The filters {}".format(the_filters))
 
     avg_freqs = None
     avg_spec = None
@@ -205,8 +222,8 @@ def get_all_volts_from_data_file(rootFile, chID, interp=None, pad=None, the_filt
             usefulEvent = ROOT.UsefulAtriStationEvent(rawEvent, ROOT.AraCalType.kLatestCalib)
             gr = usefulEvent.getGraphFromRFChan(chID)
 
-            if interp or pad or the_filter or do_freq_spec:
-                gr, grIntLength = handle_wavform(gr, interp, pad, but)
+            if interp or pad or apply_filters or do_freq_spec:
+                gr, grIntLength = handle_wavform(gr, interp=interp, pad=pad, filters=the_filters)
 
                 if do_freq_spec:
                     freqs, fft = do_fft_with_python(gr, 'rayleigh', grIntLength)
@@ -231,12 +248,24 @@ def get_all_volts_from_data_file(rootFile, chID, interp=None, pad=None, the_filt
 
 def get_all_volts_from_AraSim_file(rootFile, chID, interp=None, pad=None, the_filter=False, do_freq_spec=False):
     
-    if the_filter:
-        nyquist = 1./(2*interp*1E-9) # interp speed in ns
-        freq_lowpass = 900E6/nyquist # lowpass filter at 900 MHz (comfortably in the ARA band)
+    the_filters = []
+    # apparenty we need this line CUZ REASONS?
+    # it must activate something in FFTW behind the scenes. This was very not obvious, 
+    # and I don't understand how to fix it tbh...
+    
+    blehhhh = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, 100)
+    
+    if apply_filters == 'lowpass':
         but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, freq_lowpass)
-    else:
-        but = None
+        the_filters.append(but)
+    elif apply_filters == 'highpass':
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.HIGHPASS, 2, freq_highpass)
+        the_filters.append(but)
+    elif apply_filters == 'bandpass':
+        but = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.LOWPASS, 2, freq_lowpass)
+        but2 = ROOT.FFTtools.ButterworthFilter(ROOT.FFTtools.HIGHPASS, 2, freq_highpass)
+        the_filters.append(but)
+        the_filters.append(but2)
 
     avg_freqs = None
     avg_spec = None
@@ -253,7 +282,7 @@ def get_all_volts_from_AraSim_file(rootFile, chID, interp=None, pad=None, the_fi
         gr = realEvent.getGraphFromRFChan(chID)
 
         if interp or pad or the_filter or do_freq_spec:
-            gr, grIntLength = handle_wavform(gr, interp, pad, but)
+            gr, grIntLength = handle_wavform(gr, interp, pad, the_filters)
         
             if do_freq_spec:
                 freqs, fft = do_fft_with_python(gr, 'rayleigh', grIntLength)
