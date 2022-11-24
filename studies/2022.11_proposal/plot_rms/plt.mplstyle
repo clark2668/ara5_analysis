@@ -1,0 +1,7 @@
+xtick.labelsize: 20
+ytick.labelsize: 20
+xtick.major.size: 5
+ytick.major.size: 5
+axes.titlesize: 20
+axes.labelsize: 20
+legend.fontsize: 20
