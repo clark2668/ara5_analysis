@@ -3,7 +3,7 @@ import os
 import path_tools as pt
 
 # years = [2013, 2014, 2015, 2016, 2017, 2018]
-years = [2013]
+years = [2022]
 stations = [1, 2, 3, 4, 5]
 sample = 'burn'
 top_dir = '/mnt/scratch/baclark/ARA/burn/'
@@ -18,7 +18,7 @@ mode = 0o744
 '''
 Locate the original files on disk, and write them to a file
 '''
-find_original_files = False
+find_original_files = True
 if find_original_files:
     for y in years:
         for s in stations:
@@ -41,7 +41,7 @@ if find_original_files:
 '''
 Make the output directories for the file symlinks
 '''
-make_output_directories = False
+make_output_directories = True
 if make_output_directories:
     for y in years:
         year_dir = os.path.join(top_dir, f"{y}")
@@ -60,7 +60,7 @@ if make_output_directories:
 '''
 Actually make symlinks
 '''
-make_symlinks = False
+make_symlinks = True
 if make_symlinks:
     for y in years:
         for s in stations:
@@ -91,7 +91,7 @@ if make_symlinks:
 '''
 Harvest new file locations
 '''
-find_new_files = False
+find_new_files = True
 if find_new_files:
     for y in years:
         for s in stations:
@@ -106,47 +106,3 @@ if find_new_files:
                     for file in file_list:
                         file_name = os.path.join(the_dir, file)
                         f.write(f"{file_name}\n")
-
-
-'''
-Make dag files for running repeder
-'''
-make_dag_files = False
-if make_dag_files:
-    for s in stations:
-        for y in years:
-            in_filename = f"files/filelist_a{s}_y{y}_{sample}.txt"
-            if os.path.isfile(in_filename):
-
-                out_dir = os.path.join(ped_dir, f"{y}", f"A{s}")
-                if not os.path.isdir(out_dir):
-                    print(f"Output directory ({out_dir}) is missing. Move on")
-
-                dag_filename = f"run_repeder/dag_repeder_a_{s}_y_{y}.dag"
-                instructions = ""
-                instructions += 'CONFIG config.dagman\n'
-                with open(dag_filename, "w") as f:
-                    f.write(instructions)
-
-                index = 0
-
-                file = open(in_filename, "r")
-                for line in file:
-                    src_file = line.split()[0] # grab the zero entry
-                    run_num = str(pt.harvest_run_num(src_file))
-                    run_num = run_num.zfill(6) # make it six characters long
-                    # out_file = f"reped_a_{s}_run_{run_num}.dat"
-                    out_file = f"reped_run_{run_num}.dat"
-
-                    instructions = ""
-                    instructions += f"JOB job_{index} job.sub\n"
-                    instructions += f'VARS job_{index} station="{s}" year="{y}" run="{run_num}" infile="{src_file}" outfile="{out_file}" outdir="{out_dir}"\n\n'
-                    with open(dag_filename, "a") as f:
-                        f.write(instructions)
-                    
-                    index+=1
-
-                file.close()
-
-                    
-

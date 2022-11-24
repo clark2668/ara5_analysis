@@ -1,17 +1,20 @@
 #!/bin/bash
-#SBATCH --job-name=runRepeder_A2_Y2013
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem-per-cpu=8G
-#SBATCH --time=00:20:00
+#SBATCH --time=01:00:00
 #SBATCH --export=ALL
-#SBATCH --array=0-2
 #SBATCH --output=logs/run_batch_%A_%a.out
 #SBATCH --error=logs/run_batch_%A_%a.err
-#SBATCH --qos=deyoungbuyin_large
+#SBATCH -A general
+####SBATCH --qos=deyoungbuyin_large
+#####SBATCH --qos=scavenger
+
+#SBATCH --job-name=ped_A2_Y2013
+#SBATCH --array=0-1998
 
 STATION=2
-YEAR=2013
+YEAR=2015
 
 in_files_dir='/mnt/scratch/baclark/ARA/burn/'${YEAR}'/A'${STATION}
 out_files_dir='/mnt/scratch/baclark/ARA/peds/A'${STATION}
@@ -32,6 +35,7 @@ output_file=$(echo "$output_file" | awk -F '_' '{print $2}' )
 output_file="reped_run_"${output_file}".dat"
 
 source /mnt/home/baclark/ara/ara5_analysis/studies/2022.11_proposal/env.sh
+cd $TMPDIR
 ${ARA_UTIL_INSTALL_DIR}/bin/repeder -d -m 0 -M 4096 $input_file $output_file
 
 if test -f "$output_file"; then
