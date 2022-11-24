@@ -68,14 +68,17 @@ int main(int argc, char **argv){
     int runNum;
     eventTree->SetBranchAddress("run", &runNum);
     eventTree->GetEntry(0);
-    char ped_file_name[400];
-    sprintf(ped_file_name, "/mnt/scratch/baclark/ARA/peds/A%d/reped_run_%06d.dat.gz", station, runNum);
-    printf("The Pedestal filename is %s\n", ped_file_name);
-    AraEventCalibrator *calibrator = AraEventCalibrator::Instance();
-    calibrator->setAtriPedFile(ped_file_name,station);
+    // char ped_file_name[400];
+    // sprintf(ped_file_name, "/mnt/scratch/baclark/ARA/peds/A%d/reped_run_%06d.dat.gz", station, runNum);
+    // printf("The Pedestal filename is %s\n", ped_file_name);
+    // AraEventCalibrator *calibrator = AraEventCalibrator::Instance();
+    // int station_for_peds = -1;
+    // if (station ==1) station_for_peds=100;
+    // std::cout<<"Station for peds "<<station_for_peds<<std::endl;
+    // calibrator->setAtriPedFile(ped_file_name,station_for_peds);
 
     int numEntries = eventTree->GetEntries();
-    int numToFind = 20;
+    int numToFind = 2000;
     int numFound = 0;
     int firstUnixTime = -1000;
     for(int event=0; event<numEntries; event++){

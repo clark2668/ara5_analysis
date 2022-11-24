@@ -1,17 +1,22 @@
 #!/bin/bash
-#SBATCH --job-name=runRMS_A2_Y2013
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --mem-per-cpu=2G
+#SBATCH --mem-per-cpu=4G
 #SBATCH --time=00:20:00
 #SBATCH --export=ALL
-#SBATCH --array=0-2
 #SBATCH --output=logs/run_batch_%A_%a.out
 #SBATCH --error=logs/run_batch_%A_%a.err
-#SBATCH --qos=deyoungbuyin_large
+#######SBATCH --partition=deyoungbuyin
+#SBATCH -A general
+#######SBATCH -A deyoungbuyin
+########SBATCH --qos=deyoungbuyin_large
+######SBATCH --qos=scavenger
+
+#SBATCH --job-name=RMS_A2_Y2014
+#SBATCH --array=0-999
 
 STATION=2
-YEAR=2013
+YEAR=2014
 
 in_files_dir='/mnt/scratch/baclark/ARA/burn/'${YEAR}'/A'${STATION}
 out_files_dir='/mnt/scratch/baclark/ARA/rms/'${YEAR}'/A'${STATION}
